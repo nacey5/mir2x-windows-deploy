@@ -12,6 +12,8 @@ parts/
 __pycache__/
 *.pyc
 .venv/
+.test-deps/
+.test-output/
 
 # 用户数据
 Server.MirDB

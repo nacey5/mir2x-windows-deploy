@@ -1,0 +1,17 @@
+{
+  "upstream_commit": "201b19d322b2bf9e5582ea88f5f469d3a4bef29d",
+  "dependencies": {
+    "include/dialog.lua": "b5bbcdffeadb959f71449be083963646708ff99a7f44a163557dc5d5d088ec14",
+    "npc/include/dailyquest.lua": "77b2477180d214059e99a94e42d32862850c64fe611c94298a2141df07247edb",
+    "quest/战士初出江湖.lua": "0009a6ba220ee218b0240eb8af04556f38cf0a69c8f747c8f3fe7e47dcbb4c2f",
+    "quest/法师初出江湖.lua": "d01fea00fd1521a93674029c8ac8aa0603b9789b73ba3cf9e121497803829823",
+    "quest/道士初出江湖.lua": "ec9b60cb72b8b468783b9547186700e37ab674b524a46c38c03c573eea67bff9",
+    "npc/道馆_1.万事通_1.GLOC_398_127_0.LOOK_2.lua": "725f26b03958d2c08e355d84ab440fa6a1c3b79fd8202d45ff364fe31b6e204c",
+    "npc/比奇县_0.药店老板_1.GLOC_397_363_0.LOOK_5.lua": "906826af53d0dd5146eaafa04e52079c144e1bc6848c93869f940a6c10e2672c",
+    "npc/比奇县_0.老张_1.GLOC_423_395_0.LOOK_1.lua": "6928a136f96995ba2f192193558524031a1c699449e2f6f47ab96209f2cbee0b",
+    "npc/比奇县_0.总教头_1.GLOC_447_444_0.LOOK_15.lua": "4474b3cf61557d055d263431236bfd845c309199d2356acdfe4d180873bba0dd"
+  },
+  "replace_empty": [
+    "npc/比奇县_0.万事通_1.GLOC_456_393_0.LOOK_2.lua"
+  ]
+}
