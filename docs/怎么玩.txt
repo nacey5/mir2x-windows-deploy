@@ -1,0 +1,55 @@
+========================================
+ 传奇 mir2x —— 怎么玩
+========================================
+
+【一、现在就能玩】
+服务端已经在跑了（端口 7000）。
+直接双击：  F:\mir\2-开始游戏.bat
+浏览器/资源管理器里双击即可，等 5 秒进游戏。
+
+账号密码：
+  test / 123456   角色「亚当」，在比奇县
+  yg   / 123456   角色「YG」，在道馆
+
+【二、电脑重启后怎么开】
+1. 双击 F:\mir\1-启动服务器.bat     （第一次会弹防火墙，点“允许”）
+2. 等 5 秒，双击 F:\mir\2-开始游戏.bat
+
+【三、怎么关】
+双击 F:\mir\3-停止服务器.bat
+
+【四、游戏里怎么操作】
+  走路       鼠标左键点地面
+  攻击       鼠标左键点怪物  （走近了会自动打）
+  说话       按回车，输入文字，再回车
+  看背包     界面右下角那排按钮
+  退出游戏   窗口右上角 X
+
+【五、朋友怎么连进来】
+  你本机局域网 IP：192.168.3.117
+  朋友在同一个 WiFi 下，用这个命令启动客户端：
+     client.exe --server-ip=192.168.3.117 --auto-login=<账号>:<密码>
+  账号需要先建（见下）。
+  外网需要路由器把 7000/TCP 端口映射到这台机器。
+
+【六、怎么加新账号】
+  1. 双击 F:\mir\3-停止服务器.bat   先停服
+  2. 管理员运行 PowerShell，执行（把 zhangsan 换成你要的账号）：
+     $py='C:\Users\DaHuangGO\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe'
+     & $py -X utf8 F:\mir\tools\add_account.py F:\mir\mir2x\server\mir2x.db3 zhangsan 123456 张三
+  3. 双击 F:\mir\1-启动服务器.bat
+（账号和角色是绑定的，一个账号一个角色，上面命令会一起建好）
+
+【七、改内容】
+  怪物刷新    F:\mir\mir2x\server\script\map\*.lua   里面 name='怪物名' 和 x/y 坐标
+  NPC 对话    F:\mir\mir2x\server\script\npc\
+  任务        F:\mir\mir2x\server\script\quest\
+  地图编辑    F:\mir\mir2x\tools\mapeditor.exe
+
+【八、出问题看哪】
+  端口没起来        看 F:\mir\logs\server-err-*.log，通常是 7000 被占
+  客户端连不上      防火墙有没有放行 server.exe
+  游戏里角色不动    点的地方是树/墙，换块空地
+  想查账号角色      F:\mir\tools\list_accounts.py
+
+完整技术记录：F:\dsh-workspace\mir-research\mir2x-部署实录.md

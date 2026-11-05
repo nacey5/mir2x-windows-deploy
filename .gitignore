@@ -1,0 +1,19 @@
+# 游戏本体与安装包（太大了，不入库）
+mir2x/
+*.zip
+*.7z
+*.rar
+
+# 运行时产物
+*.log
+*.db3
+*.db3.bak*
+parts/
+__pycache__/
+*.pyc
+.venv/
+
+# 用户数据
+Server.MirDB
+Server.MirADB
+Back Up/
