@@ -18,6 +18,7 @@ mir2x 官方只给一个 1.26 GB 的构建包，README 里是三条命令。实�
 | 想加账号，写库直接报 `unknown function: jobValid()` | `tools/add_account.py` 补了 `jobValid` / `SYS_PLY_VIEWR` 两个 UDF 桩 |
 | 记不清账号角色对应关系 | `tools/list_accounts.py` 一条命令列出 |
 | 想把角色丢到怪堆里测战斗 | `tools/move_char.py` / `heal_char.py` |
+| **新角色出生没装备没技能，光着身子打不了怪** | `tools/equip_char.py` + `tools/parse_item_ids.py`（见下） |
 | 每次开服要点一堆命令 | `scripts/*.bat` 双击即用 + 桌面快捷方式 |
 
 ---
@@ -69,6 +70,39 @@ cd F:\mir\mir2x\client
 
 ---
 
+## 让角色能打：装备 / 技能 / 药
+
+新角色在 `tbl_wear` 和 `tbl_learnedmagiclist` 里**都是空的**，出生只能空手站着。商店 NPC 脚本是齐的（比奇县药店老板 397,363、铁匠 423,396、总教头 447,444 卖技能书），走过去点就行；但想省事可以直接配：
+
+```powershell
+Get-Process server | Stop-Process -Force        # 必须先停服
+$py='C:\Users\DaHuangGO\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe'
+& $py -X utf8 F:\mir\tools\equip_char.py F:\mir\mir2x\server\mir2x.db3 8   # 8 = 角色 dbid
+```
+
+写入内容：乌木剑(826) → 武器槽 3、高级布衣男(766) → 衣服槽 1、金创药中(6)×20、魔法药中(10)×20、回城卷(152)×1、学会基本剑术(25)。
+
+实测 HP 上限 100 → 273，客户端 AC/DC 从 `0-0` 变为 `1-2 / 2-3`：
+
+![穿上装备](mir2x-evidence/07-装备与药品已配好.png)
+
+ID 对照表（1258 件物品 / 155 个技能里挑出的常用项）：
+
+| 名称 | ID | 名称 | ID |
+|---|---|---|---|
+| 金创药（小/中/大/特） | 5 / 6 / 7 / 8 | 魔法药（小/中/大/特） | 9 / 10 / 11 / 12 |
+| 回城卷 | 152 | 随机传送卷 | 150 |
+| 破山剑 | 824 | 乌木剑 | 826 |
+| 布衣（男/女） | 765 / 770 | 高级布衣（男） | 766 |
+| 基本剑术 | 25 | 攻杀剑术 | 28 |
+| 刺杀剑术 | 31 | 烈火剑法 | 56 |
+
+完整映射用 `tools/parse_item_ids.py` 自己生成（先下载 `itemrecord.inc` / `magicrecord.inc`，脚本顶部写了命令）。
+
+装备槽位：`1=衣服 2=头盔 3=武器 4=鞋 5=项链 6/7=手镯 8/9=戒指 10=火把 11=护身符`。注意 legacy 的 `Givew 1 <剑>` 里 1 是武器，mir2x 里武器是 **3**。
+
+---
+
 ## 仓库内容
 
 ```
@@ -83,10 +117,12 @@ tools/
   add_account.py            新建账号 + 角色（需停服）
   move_char.py              把角色传送到指定地图坐标
   heal_char.py              改角色 HP
+  equip_char.py             配装备 / 药品 / 技能（需停服）
+  parse_item_ids.py         从 itemrecord.inc / magicrecord.inc 生成物品与技能 ID 表
 scripts/
   1-启动服务器.bat / 2-开始游戏.bat / 3-停止服务器.bat    双击即用
   start-server.ps1 / start-client.ps1 / stop-server.ps1   带日志与端口就绪检测
-mir2x-evidence/             6 张实证截图
+mir2x-evidence/             7 张实证截图
 ```
 
 ---
@@ -103,12 +139,15 @@ mir2x-evidence/             6 张实证截图
 - 经验值影响等级与 HP 上限（`exp=1000000` → 上限 100 → 163）
 - 地图切换（map 1 → 24），NPC / 小地图 / HUD 全部跟随刷新
 - 双客户端并发连接同一服务端
+- 装备写入武器/衣服槽后属性生效（HP 上限 100 → 273，AC/DC 0-0 → 1-2 / 2-3）
+- 技能写入 `tbl_learnedmagiclist` 后服务端重启仍保留
 
 **未验证**
 
 - 玩家主动攻击怪物（点怪 → 反击 → 怪物死亡 → 掉落经验）—— 卡在输入注入，见下
 - 任务系统（接任务 / 交任务）
-- 战斗技能（`tbl_learnedmagiclist` 为空，角色出生无技能）
+- 商店买卖的实际点击流程（NPC 脚本已就位，但没走完对话）
+- 技能释放（`tbl_playerconfig.fld_magickeylist` 里的快捷栏绑定是 zstd 压缩的二进制，还没解）
 
 ---
 

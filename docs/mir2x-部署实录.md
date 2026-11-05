@@ -245,6 +245,85 @@ con.create_function("SYS_PLY_VIEWR", 0, lambda: 15)
 
 > 补充：**服务端不会自动注册账号**。用不存在的账号 `--auto-login=newbie01:123456` 启动，客户端能连上 7000 但被拒，`tbl_account` 不新增记录，画面停在登录框。要新账号只能走登录界面注册或上面这条写库路线。
 
+### 5.6b 可玩化：装备 / 药品 / 技能（第四轮）
+
+新角色的 `tbl_wear`、`tbl_learnedmagiclist` **全表都是空的** —— 出生没装备没技能，只能空手站着。背包里那 1 个 `itemid=4` 其实是个「金币（超）」。
+
+#### 物品与技能 ID 怎么查
+
+mir2x 的 ID 就是 `common/src/itemrecord.inc` / `magicrecord.inc` 里的数组下标（`DBCOM_ITEMID` 返回 offset），第 0 项是空占位。把两个 inc 抓下来用 `tools/parse_item_ids.py` 解析即可：
+
+```powershell
+curl.exe -L -o F:\mir\logs\itemrecord.inc  https://raw.githubusercontent.com/etorth/mir2x/master/common/src/itemrecord.inc
+curl.exe -L -o F:\mir\logs\magicrecord.inc https://raw.githubusercontent.com/etorth/mir2x/master/common/src/magicrecord.inc
+python F:\mir\tools\parse_item_ids.py
+```
+
+实测得到 1258 件物品、155 个技能。常用对照：
+
+| 名称 | ID | 名称 | ID |
+|---|---|---|---|
+| 金创药（小/中/大/特） | 5 / 6 / 7 / 8 | 魔法药（小/中/大/特） | 9 / 10 / 11 / 12 |
+| 回城卷 | 152 | 随机传送卷 | 150 |
+| 破山剑 | 824 | 乌木剑 | 826 |
+| 旋风流星刀 | 842 | 破魂 | 837 |
+| 布衣（男/女） | 765 / 770 | 高级布衣（男） | 766 |
+| **基本剑术** | **25** | 攻杀剑术 | 28 |
+| 刺杀剑术 | 31 | 半月弯刀 | 55 |
+| 野蛮冲撞 | 57 | 烈火剑法 | 56 |
+
+#### 装备槽位
+
+来自 `common/src/protocoldef.hpp` 的 `WearLookGridType`：
+
+```
+1 = 衣服(DRESS)   2 = 头盔(HELMET)   3 = 武器(WEAPON)
+4 = 鞋   5 = 项链   6/7 = 手镯   8/9 = 戒指   10 = 火把   11 = 护身符
+```
+
+> 注意：legacy 的 `Givew 1 <剑>` 里 1 是武器，mir2x 里武器是 **3**，别照抄。
+
+#### 一条命令配好
+
+```powershell
+Get-Process server | Stop-Process -Force            # 必须先停服
+$py='C:\Users\DaHuangGO\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe'
+& $py -X utf8 F:\mir\tools\equip_char.py F:\mir\mir2x\server\mir2x.db3 8   # 8 = 角色 dbid
+```
+
+实际写入：乌木剑(826) 进武器槽、高级布衣男(766) 进衣服槽、金创药中(6)×20、魔法药中(10)×20、回城卷(152)×1、学会基本剑术(25)。
+
+#### 验证结果
+
+重启后服务端**保留了这些数据**（没有被内存态覆盖）：
+
+```
+YG wear  = [(1, 766, 1, 0, 0), (3, 826, 1, 0, 0)]      衣服 + 武器
+YG inv   = [(4,1), (6,20), (10,20), (152,1)]            金币 + 金创药 + 魔法药 + 回城卷
+YG magic = [(25, 0)]                                     基本剑术
+YG char  = [('YG', 24, 402, 119, 273, 9999)]             HP 上限 100 → 273（装备加成）
+```
+
+HP 上限从 100 涨到 273、客户端 AC/DC 从 `0-0` 变成 `1-2 / 2-3`，说明装备属性生效了。
+
+![穿上装备](mir2x-evidence/07-装备与药品已配好.png)
+
+#### 商店其实早就写好了
+
+`server/script/npc/include/merchant/` 下有完整的商用模块：`apothecary`（药）、`smith`（武器/修理）、`outfitter`（衣服）、`jeweler`（首饰）、`bookseller`（技能书）、`grocer`（杂货）、`butcher`（肉类）、`buyer`（收材料）、`repairer`（修理）。
+
+比奇县里已经接好的 NPC：
+
+| NPC | 坐标 | 卖什么 |
+|---|---|---|
+| 药店老板 | 397,363 | 金创药/魔法药 小中大特 |
+| 铁匠 | 423,396 | 破山剑、旋风流星刀、破魂 |
+| 总教头 | 447,444 | 战士技能书（基本剑术 700 金起） |
+
+道馆（map 24）更全：药神、药中、铁匠、王铁匠、寄售商汉林、散财童子、**怪物召唤商人**、物品展示商人、数据库测试商人。
+
+所以「可玩」不需要额外开发 —— 走过去点 NPC 就行，只是**不能用程序代点**（见 §6 第 4 条）。
+
 ### 5.7 战斗与系统验证（第三轮）
 
 走位/点击的自动化驱动不可靠（见 §6 第 4 条），所以改用「改库把人放进怪堆 + 让服务端 AI 自己跑」的方式验证战斗，另用改库验证经验与地图。
